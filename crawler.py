@@ -3,7 +3,18 @@ import requests
 import os
 import sys
 import pandas as pd
+from datetime import date
 
+def set_dir():
+    today = date.today()
+    date_string='{:%m-%d-%Y}'.format(today)
+    script_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or '.')
+    path=script_dir+'\\'+'data'+'\\'+"historical_data\\"+date_string
+    try:
+        os.mkdir(path)
+    except:
+        pass
+    return path
 def get_list():
     from bs4 import BeautifulSoup
     result=[]
@@ -34,14 +45,14 @@ def makelistofstocks():
     listoflists_to_csv(l,"stockslist",myheader)
 
 def makehistorialdata(data,name):
-    script_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or '.')
+    #script_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or '.')
     my_df = pd.DataFrame(data[1:])
-    my_df.to_csv(script_dir+'/'+'data'+'/'+name+".csv", index=False,header=data[0])
+    my_df.to_csv(name+".csv", index=False,header=data[0])
     print("list to csv success")
 
 def get_data(stocknum,country):
 
-    CSV_URL = 'https://query1.finance.yahoo.com/v7/finance/download/'+stocknum+'.'+country+'?period1=1564987348&period2=1596609748&interval=1d&events=history'
+    CSV_URL = 'https://query1.finance.yahoo.com/v7/finance/download/'+stocknum+'.'+country+'?period1=1566115445&period2=1597737845&interval=1d&events=history'
 
 
     with requests.Session() as s:
@@ -51,7 +62,7 @@ def get_data(stocknum,country):
         my_list = list(cr)
         return my_list
 
-def list_data(csv):
+def list_data(path,csv):
     stockslist=pd.read_csv(csv)
     country="HK"
     stocks_num=stockslist['id']
@@ -61,7 +72,7 @@ def list_data(csv):
         numString="{:04d}".format(num)
         print(numString,name)
         data=get_data(numString,country)
-        name="historical_data/"+numString+"_"+name+"_"+data[len(data)-1][0]
+        name=path+'/'+numString
         try:
             makehistorialdata(data,name)
         except:
@@ -69,9 +80,10 @@ def list_data(csv):
 
 def main():
     #makelistofstocks()
+    path=set_dir()
     script_dir = os.path.abspath(os.path.dirname(sys.argv[0]) or '.')
     csv=script_dir+'/data/stockslist.csv'
-    list_data(csv)
+    list_data(path,csv)
 
 
 if __name__ == "__main__":
